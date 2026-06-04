@@ -384,7 +384,7 @@ function openOffice(){
     <button class="office-phone walk-hotspot" data-thing="Phone" onclick="useOfficeThing('Phone')">☎️<span>Phone</span></button>
     <button class="office-printer walk-hotspot" data-thing="Printer" onclick="useOfficeThing('Printer')">🖨️<span>Printer</span></button>
     ${item('Pink Rug','rug')}${item('Flower Lamp','lamp')}${item('Snack Table','snacks')}${item('Fish Tank','fish')}${item('Mini Couch','couch')}${item('Plant Corner','plant')}${item('Tiny Fountain','fountain')}${item('Office Elevator','elevator')}
-    <div id="tinleyPlayer" class="tinley-player" style="left:${S.player.x}%;top:${S.player.y}%">🧍‍♀️<span>Tinley</span></div>
+    <div id="tinleyPlayer" class="tinley-player" style="left:${S.player.x}%;top:${S.player.y}%"><div class="avatar-head"></div><div class="avatar-body"></div><div class="avatar-arms"></div><div class="avatar-legs"></div><span>Tinley</span></div>
   </div><div class="move-pad"><button onclick="movePlayer(0,-8)">⬆️</button><button onclick="movePlayer(-8,0)">⬅️</button><button onclick="useNearbyThing()">Use ✨</button><button onclick="movePlayer(8,0)">➡️</button><button onclick="movePlayer(0,8)">⬇️</button></div><div class="office-actions"><button onclick="officeMiniJob('email')">📧 Answer Emails</button><button onclick="officeMiniJob('call')">📞 Take Calls</button><button onclick="officeMiniJob('meeting')">📅 Meeting</button><button onclick="officeMiniJob('pack')">📦 Pack Orders</button></div><p>Office cool score: <b>${S.officeItems.length}</b></p><button onclick="openOfficeShop()">🛋 Open Office Shop</button><button onclick="makeTask()">💻 Back to Work</button></div>`;
   if(modal.open) modal.close();
 }
@@ -416,10 +416,12 @@ function finishOfficeMiniJob(kind){
   mb.innerHTML=`<h3>Office work done ✅</h3><p>Tinley finished real office work.</p><p>You earned <b>$${pay}</b>.</p><button onclick="openOffice()">Back to Office 🏢</button>`;
 }
 function useOfficeThing(name){
-  const rewards={Window:5,Chair:8,Phone:22,Printer:18,'CEO Desk':30,'Snack Table':12,'Fish Tank':10,'Mini Couch':10,'Wall TV':15,'Neon Sign':15,'Office Elevator':35};
-  const pay=rewards[name]||12;
-  S.money+=pay; S.happy=Math.min(100,S.happy+2); sync(); save();
-  flash(`Used ${name}! Earned $${pay} ✨`);
+  if(name==='CEO Desk'){officeMiniJob('email');return;}
+  if(name==='Phone'){officeMiniJob('call');return;}
+  if(name==='Printer'){officeMiniJob('pack');return;}
+  const messages={Window:'Tinley looks out the office window ☀️',Chair:'Tinley sits in the chair — comfy!', 'Snack Table':'Tinley takes a snack break 🍪', 'Fish Tank':'Tinley watches the fish swim 🐠', 'Mini Couch':'Tinley relaxes on the couch 🛋️', 'Wall TV':'Tinley checks the office TV 📺', 'Neon Sign':'The neon sign glows ✨', 'Office Elevator':'Tinley rides the elevator 🛗'};
+  S.happy=Math.min(100,S.happy+1); sync(); save();
+  flash(messages[name]||`Tinley used ${name}. No free money — do a job to earn cash!`);
 }
 function openOfficeShop(){
   enterGame();
