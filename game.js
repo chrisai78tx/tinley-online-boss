@@ -164,17 +164,26 @@ function finishShift(){
   mb.innerHTML=`<h3>Shift finished! 🎉</h3><p>You finished ${shift.done}/${shift.goal} work tasks.</p><p>Paycheck: <b>$${pay}</b></p><p>${shift.done>=shift.goal?'Boss says: Amazing work!':'Boss says: Good try, finish more next shift!'}</p>`;
 }
 
+const chatTopics=[
+  {q:'Hi! Can I order a pink sticker?',need:['pink','sticker'],yes:'Great, please add one pink sticker to my order!',no:'Okay, thanks for telling me. What colors do you have?'},
+  {q:'Do you sell rainbow scooters?',need:['rainbow','scooter'],yes:'Yay! How much is one rainbow scooter?',no:'No problem. I will pick something else.'},
+  {q:'My plushie order is late. Can you check it?',need:['order','check'],yes:'Thank you for checking my order!',no:'Okay, please tell me who can help.'},
+  {q:'Can you send me the game link?',need:['link','send'],yes:'Thanks! I will try the link now.',no:'Okay, send it when it is ready.'},
+  {q:'Do you have a 67 surprise box?',need:['67','surprise'],yes:'Cool! Please save one 67 surprise box.',no:'Okay, maybe next time.'},
+  {q:'Can you write a proposal for my online store?',need:['proposal','store'],yes:'Perfect, please make it professional.',no:'Okay, I will ask later.'},
+  {q:'Are you open on Saturday?',need:['open','saturday'],yes:'Great, I will shop on Saturday!',no:'Thanks for letting me know.'},
+  {q:'Can I return this if it does not fit?',need:['return','fit'],yes:'Thanks, that helps a lot.',no:'Okay, I will be careful before buying.'},
+  {q:'Can you send me a receipt?',need:['receipt','send'],yes:'Thank you, I needed that receipt.',no:'Okay, I will wait.'}
+];
 const chatPeople=[
-  {name:'Mia',emoji:'👧',msgs:['Hi! Can I order a pink sticker?','Do you have rainbow ones too?','Thank you!'],need:['sticker','rainbow']},
-  {name:'Dad',emoji:'👨',msgs:['Can you send me the game link?','Also can you make it easy to play?','Proud of you!'],need:['link','easy']},
-  {name:'Lulu',emoji:'🧒',msgs:['My plushie order is late.','Can you check it please?','Yay thanks!'],need:['order','check']},
-  {name:'Koko',emoji:'🌟',msgs:['Need help with work?','Try kind answers!','You are doing great!'],need:['help','kind']},
-  {name:'Customer 67',emoji:'6️⃣7️⃣',msgs:['Do you sell a 67 surprise box?','How much is it?','Cool!'],need:['67','surprise']},
-  {name:'Business Lady',emoji:'👩‍💼',msgs:['Can you write me a proposal?','I need it for an online store.','Perfect!'],need:['proposal','store']}
+  {name:'Mia',emoji:'👧'}, {name:'Dad',emoji:'👨'}, {name:'Lulu',emoji:'🧒'},
+  {name:'Koko',emoji:'🌟'}, {name:'Customer 67',emoji:'6️⃣7️⃣'}, {name:'Business Lady',emoji:'👩‍💼'}
 ];
 let activeChat=0;
+function nextChatTopic(used=[]){const left=chatTopics.map((_,i)=>i).filter(i=>!used.includes(i)); return rand(left.length?left:chatTopics.map((_,i)=>i));}
 function ensureChats(){
-  if(!S.chats){S.chats=chatPeople.map(p=>({i:0,history:[{from:'them',text:p.msgs[0]}],done:false}));}
+  if(S.chatVersion!==2){S.chatVersion=2;S.chats=null;}
+  if(!S.chats){S.chats=chatPeople.map(()=>{const topic=nextChatTopic([]);return {topic,used:[topic],history:[{from:'them',text:chatTopics[topic].q}]};});}
 }
 function openChatApp(){
   ensureChats();
@@ -193,16 +202,24 @@ function renderChats(){
 function sendChatReply(){
   ensureChats();
   const box=document.getElementById('chatReply'); const text=(box?.value||'').trim(); if(!text)return;
-  const p=chatPeople[activeChat], c=S.chats[activeChat];
+  const c=S.chats[activeChat], topic=chatTopics[c.topic];
+  const lower=text.toLowerCase();
   c.history.push({from:'me',text}); box.value='';
-  const good=p.need.some(w=>text.toLowerCase().includes(w)) || ['help','yes','sure','sorry','thanks','thank'].some(w=>text.toLowerCase().includes(w));
-  if(good){S.money+=8+S.upgrades.length*2;S.happy=Math.min(100,S.happy+3);S.streak++;}
-  else{S.happy=Math.max(0,S.happy-3);S.streak=0;}
-  c.i=Math.min(c.i+1,p.msgs.length-1);
-  setTimeout(()=>{ if(c.i<p.msgs.length){c.history.push({from:'them',text:p.msgs[c.i]});} renderChats(); sync(); save(); },250);
+  const saidNo=/\b(no|not|none|dont|don't|sorry|out|sold out)\b/.test(lower);
+  const saidYes=/\b(yes|yeah|yep|sure|we do|have it|available)\b/.test(lower);
+  const answeredTopic=topic.need.some(w=>lower.includes(w))||saidYes||saidNo;
+  if(answeredTopic){S.money+=10+S.upgrades.length*2;S.happy=Math.min(100,S.happy+3);S.streak++;}
+  else{S.happy=Math.max(0,S.happy-2);S.streak=0;}
+  const reply=saidNo?topic.no:(saidYes||answeredTopic?topic.yes:'Okay, can you explain a little more?');
+  const newTopic=nextChatTopic(c.used||[]); c.used=[...(c.used||[]),newTopic].slice(-chatTopics.length); c.topic=newTopic;
+  setTimeout(()=>{
+    c.history.push({from:'them',text:reply});
+    setTimeout(()=>{c.history.push({from:'them',text:chatTopics[newTopic].q}); renderChats(); sync(); save();},500);
+    renderChats(); sync(); save();
+  },250);
   renderChats(); sync(); save();
 }
-function chatHint(){const p=chatPeople[activeChat]; const c=S.chats[activeChat]; c.history.push({from:'them',text:'Hint: try mentioning '+p.need.join(' and ')+'.'}); renderChats();}
+function chatHint(){renderChats();}
 
 const types={call:'📞 Call',msg:'💬 Message',email:'📧 Email',proposal:'📋 Proposal'};
 const prompts=[
