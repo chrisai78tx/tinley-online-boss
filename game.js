@@ -362,6 +362,8 @@ function officeDecor(){return S.officeItems.length?S.officeItems.map(n=>officeCa
 function hasOfficeItem(name){return S.officeItems.includes(name)}
 function openOffice(){
   enterGame();
+  S.player.x=Math.max(12,Math.min(88,S.player.x||50));
+  S.player.y=Math.max(32,Math.min(82,S.player.y||68));
   const item=(name,cls,label=name)=>hasOfficeItem(name)?`<button class="office-item ${cls}" data-thing="${name}" onclick="useOfficeThing('${name.replaceAll("'","\\'")}')">${officeCatalog.find(i=>i.name===name)?.emoji}<span>${label}</span></button>`:'';
   inbox.innerHTML=`<div class="task"><h3>🏢 Tinley’s Walk-Around Office</h3><p>Move Tinley around, then press <b>Use</b> near things.</p><div class="office-room walk-room" id="officeRoom">
     <div class="office-wall"><button class="window walk-hotspot" data-thing="Window" onclick="useOfficeThing('Window')">☀️<span>Window</span></button>${item('Neon Sign','neon')}${item('Wall TV','tv')}</div>
@@ -378,7 +380,7 @@ function openOffice(){
 function movePlayer(dx,dy){
   S.player.x=Math.max(6,Math.min(92,S.player.x+dx));
   S.player.y=Math.max(24,Math.min(86,S.player.y+dy));
-  const p=document.getElementById('tinleyPlayer'); if(p){p.style.left=S.player.x+'%'; p.style.top=S.player.y+'%';}
+  const p=document.getElementById('tinleyPlayer'); if(p){p.style.left=S.player.x+'%'; p.style.top=S.player.y+'%'; p.classList.add('moving'); setTimeout(()=>p.classList.remove('moving'),250);}
   save();
 }
 function useNearbyThing(){
