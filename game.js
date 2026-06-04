@@ -251,7 +251,7 @@ const upgradedPrompts=[
 function workLevel(){return 1+Math.min(8,S.upgrades.length)}
 
 let active=null;
-function save(){localStorage.setItem(saveKey,JSON.stringify(S));flash('Saved! 💾')}
+function save(){localStorage.setItem(saveKey,JSON.stringify(S))}
 function sync(){money.textContent=S.money;happy.textContent=S.happy;streak.textContent=S.streak;orders.textContent=S.orders;business.textContent=S.biz;const lvl=document.getElementById('workLevel'); if(lvl) lvl.textContent=workLevel(); clock.textContent=`Day ${S.day} • ${9+Math.floor(S.tick/4)}:${(S.tick%4)*15===0?'00':(S.tick%4)*15} ${9+Math.floor(S.tick/4)>=12?'PM':'AM'}`;upgrades.innerHTML=S.upgrades.map(u=>`<li>✅ ${u}</li>`).join('')||'<li>No upgrades yet</li>'}
 function upgradePayBonus(){return S.upgrades.length*4+S.upgrades.filter(u=>u.includes('VIP')||u.includes('Rainbow')||u.includes('Team')||u.includes('CEO')||u.includes('Castle')||u.includes('Global')||u.includes('Celebrity')).length*10}
 function openUpgradeShop(){
@@ -287,24 +287,11 @@ function submitTyped(){if(!active)return;const text=(replyBox.value||'').trim();
 function showHint(){if(active)flash('Hint: '+active.hint)}
 function flash(t){inbox.insertAdjacentHTML('afterbegin',`<p><b>${t}</b></p>`)}
 start.onclick=()=>{S.started=true;S.biz=bizName.value||S.biz;intro.hidden=true;game.hidden=false;sync();makeTask();save()}
-function addButtonIfMissing(id,text,fn,beforeId='auctionBtn'){
-  let btn=document.getElementById(id);
-  if(!btn){
-    btn=document.createElement('button'); btn.id=id; btn.textContent=text;
-    const before=document.getElementById(beforeId), side=document.querySelector('.side');
-    if(before&&before.parentNode) before.parentNode.insertBefore(btn,before); else side?.appendChild(btn);
-  }
-  btn.onclick=fn;
-}
-addButtonIfMissing('officeBtn','🏢 Teleport to Office',openOffice);
-addButtonIfMissing('officeShopBtn','🛋 Office Shop',openOfficeShop);
-addButtonIfMissing('auctionBtn','🔨 Create Your Own Auction',openAuction);
-addButtonIfMissing('chatAppBtn','💬 Open Messages App',openChatApp);
-addButtonIfMissing('workShiftBtn','🏢 Start Real Work Shift',startWorkShift);
-addButtonIfMissing('adultOfficeBtn','💼 Adult Office Mode',adultOfficeMode);
-addButtonIfMissing('proposalBtn','📋 Do a Proposal',openProposalDesk);
-addButtonIfMissing('upgrade','🛍 Open Upgrade Shop',openUpgradeShop);
-addButtonIfMissing('tutorial','🌟 Tutorial',()=>openM('Tutorial 🌟','<ol><li>Read the call/message/email.</li><li>Type your own kind answer.</li><li>Include the important words, like order, refund, password, or link.</li><li>Earn money and buy upgrades.</li><li>Every upgrade unlocks more work, harder questions, and proposals.</li><li>Auctions need a 5 minute wait after each sale.</li></ol>'));
+chatAppBtn.onclick=openChatApp;
+workShiftBtn.onclick=startWorkShift;
+adultOfficeBtn.onclick=adultOfficeMode;
+proposalBtn.onclick=openProposalDesk;
+tutorial.onclick=()=>openM('Tutorial 🌟','<ol><li>Read the call/message/email.</li><li>Type your own kind answer.</li><li>Include the important words, like order, refund, password, or link.</li><li>Earn money and buy upgrades.</li><li>Every upgrade unlocks more work, harder questions, and proposals.</li><li>Auctions need a 5 minute wait after each sale.</li></ol>');
 
 
 function itemPicture(text){
@@ -435,5 +422,5 @@ function buyOfficeItem(i){
   S.money-=it.cost; S.officeItems.push(it.name); S.happy=Math.min(100,S.happy+3); sync(); save(); openOfficeShop();
 }
 reset.onclick=()=>{if(confirm('Reset game?')){localStorage.removeItem(saveKey);location.reload()}}
-save.onclick=save;function openM(t,b){mt.textContent=t;mb.innerHTML=b;modal.showModal()} window.submitTyped=submitTyped; window.showHint=showHint; window.openAuction=openAuction; window.startAuction=startAuction; window.auctionHype=auctionHype; window.finishAuction=finishAuction; window.updateAuctionPreview=updateAuctionPreview; window.openProposalDesk=openProposalDesk; window.startProposal=startProposal; window.submitProposal=submitProposal; window.proposalHint=proposalHint; window.adultOfficeMode=adultOfficeMode; window.clientMeeting=clientMeeting; window.makeInvoice=makeInvoice; window.writeReport=writeReport; window.approveRequest=approveRequest; window.performanceReview=performanceReview; window.budgetPlan=budgetPlan; window.submitOfficeWork=submitOfficeWork; window.openUpgradeShop=openUpgradeShop; window.buyUpgrade=buyUpgrade; window.buyNextUpgrade=buyNextUpgrade; window.openOffice=openOffice; window.openOfficeShop=openOfficeShop; window.buyOfficeItem=buyOfficeItem; window.startWorkShift=startWorkShift; window.doShiftTask=doShiftTask; window.submitShiftTask=submitShiftTask; window.shiftTaskHint=shiftTaskHint; window.finishShift=finishShift; window.openChatApp=openChatApp; window.renderChats=renderChats; window.sendChatReply=sendChatReply; window.chatHint=chatHint;
+function openM(t,b){mt.textContent=t;mb.innerHTML=b;modal.showModal()} window.submitTyped=submitTyped; window.showHint=showHint; window.openAuction=openAuction; window.startAuction=startAuction; window.auctionHype=auctionHype; window.finishAuction=finishAuction; window.updateAuctionPreview=updateAuctionPreview; window.openProposalDesk=openProposalDesk; window.startProposal=startProposal; window.submitProposal=submitProposal; window.proposalHint=proposalHint; window.adultOfficeMode=adultOfficeMode; window.clientMeeting=clientMeeting; window.makeInvoice=makeInvoice; window.writeReport=writeReport; window.approveRequest=approveRequest; window.performanceReview=performanceReview; window.budgetPlan=budgetPlan; window.submitOfficeWork=submitOfficeWork; window.openUpgradeShop=openUpgradeShop; window.buyUpgrade=buyUpgrade; window.buyNextUpgrade=buyNextUpgrade; window.openOffice=openOffice; window.openOfficeShop=openOfficeShop; window.buyOfficeItem=buyOfficeItem; window.startWorkShift=startWorkShift; window.doShiftTask=doShiftTask; window.submitShiftTask=submitShiftTask; window.shiftTaskHint=shiftTaskHint; window.finishShift=finishShift; window.openChatApp=openChatApp; window.renderChats=renderChats; window.sendChatReply=sendChatReply; window.chatHint=chatHint;
 if(S.started){intro.hidden=true;game.hidden=false;sync();makeTask()} else sync();
