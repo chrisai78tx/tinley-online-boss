@@ -285,7 +285,9 @@ function musicLoop(){
 function toggleMusic(){
   if(!musicCtx) musicCtx=new (window.AudioContext||window.webkitAudioContext)();
   musicOn=!musicOn;
-  const btn=document.getElementById('musicBtn'); if(btn) btn.textContent=musicOn?'🔇 Stop':'🎵 Music';
+  const btn=document.getElementById('musicBtn'), topBtn=document.getElementById('topMusicBtn');
+  if(btn) btn.textContent=musicOn?'🔇 Stop':'🎵 Music';
+  if(topBtn) topBtn.textContent=musicOn?'🔇 Stop':'🎵 Music';
   if(musicOn){musicCtx.resume(); musicLoop(); flash('Relaxing music on 🎵');}
   else{clearTimeout(musicTimer); flash('Music off 🔇');}
 }

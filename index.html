@@ -1,11 +1,11 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><title>Tinley Online Boss</title><link rel="stylesheet" href="style.css"></head><body>
 <div id="alwaysButtons" class="always-buttons"><button onclick="openOffice()">🏢 Office</button><button onclick="openOfficeShop()">🛋 Shop</button><button onclick="openAuction()">🔨 Auction</button><button onclick="openUpgradeShop()">🛍 Upgrades</button><button onclick="toggleMusic()" id="musicBtn">🎵 Music</button></div>
 <div id="app">
-<header><h1>💻 Tinley Online Boss</h1><div class="cash">💵 $<span id="money">0</span></div></header>
+<header><h1>💻 Tinley Online Boss</h1><button onclick="toggleMusic()" id="topMusicBtn">🎵 Music</button><div class="cash">💵 $<span id="money">0</span></div></header>
 <section id="intro" class="card big"><h2>Start your online business ✨</h2><p>Answer calls, messages, and emails. Be fast and kind to make customers happy!</p><input id="playerName" value="Tinley" maxlength="18" placeholder="Your name"><input id="bizName" value="My Online Boss Shop" maxlength="28"><button id="start">Start Work Day</button></section>
 <main id="game" hidden>
 <section class="desk card"><div class="screen"><h2 id="business">My Online Boss Shop</h2><p id="clock">Day 1 • 9:00 AM</p><div class="stats"><span>⭐ Happy <b id="happy">50</b></span><span>🔥 Streak <b id="streak">0</b></span><span>📦 Orders <b id="orders">0</b></span><span>🏢 Work Level <b id="workLevel">1</b></span></div><div id="inbox"></div></div></section>
 <aside class="card side"><h3>How to play</h3><ol><li>Pick the best reply.</li><li>Calls are fastest.</li><li>Emails need professional answers.</li><li>Wrong answers lose happiness.</li></ol><button id="tutorial">🌟 Tutorial</button><button id="chatAppBtn">💬 Open Messages App</button><button id="workShiftBtn">🏢 Start Real Work Shift</button><button id="adultOfficeBtn">💼 Adult Office Mode</button><button id="proposalBtn">📋 Do a Proposal</button><button id="reset">↺ Reset</button><h3>Upgrades</h3><ul id="upgrades"></ul></aside>
 </main>
 <dialog id="modal"><form method="dialog"><h2 id="mt"></h2><div id="mb"></div><button>Close</button></form></dialog>
-</div><script src="game.js?v=relax-music-1"></script></body></html>
+</div><script src="game.js?v=easy-music-button-1"></script></body></html>
