@@ -46,8 +46,8 @@ const officeCatalog=[
   {name:'Royal Desk',emoji:'👑',cost:1700},
   {name:'Office Elevator',emoji:'🛗',cost:2500}
 ];
-let S=JSON.parse(localStorage.getItem(saveKey)||'null')||{started:false,biz:"Tinley's Play World Shop",money:0,happy:50,streak:0,orders:0,day:1,tick:0,upgrades:[],officeItems:[],lastAuction:0};
-S.upgrades ||= []; S.officeItems ||= []; S.lastAuction ||= 0; S.player ||= {x:50,y:72};
+let S=JSON.parse(localStorage.getItem(saveKey)||'null')||{started:false,name:'Tinley',biz:"My Online Boss Shop",money:0,happy:50,streak:0,orders:0,day:1,tick:0,upgrades:[],officeItems:[],lastAuction:0};
+S.name ||= 'Player'; S.upgrades ||= []; S.officeItems ||= []; S.lastAuction ||= 0; S.player={x:50,y:68};
 
 
 
@@ -286,7 +286,7 @@ function grade(text){const t=text.toLowerCase();let score=0;if(t.length>=8)score
 function submitTyped(){if(!active)return;const text=(replyBox.value||'').trim();if(!text){flash('Type your answer first!');return}const score=grade(text);if(score>=3){S.money+=(active.type==='proposal'?30:15)+upgradePayBonus();S.happy=Math.min(100,S.happy+6);S.streak++;S.orders++;flash(`Great typed reply! ⭐ You wrote: “${esc(text)}”`)}else if(score>=2){S.money+=(active.type==='proposal'?15:7)+Math.floor(upgradePayBonus()/2);S.happy=Math.min(100,S.happy+1);S.streak=0;S.orders++;flash(`Okay reply! Try adding more helpful details next time.`)}else{S.happy=Math.max(0,S.happy-8);S.streak=0;flash('Oops! Make it kinder and answer the customer problem.')}S.tick++;if(S.tick>=32){S.day++;S.tick=0;S.money+=S.happy>70?50:15;flash('Work day finished! Bonus paid 🎉')}active=null;sync();save();setTimeout(makeTask,900)}
 function showHint(){if(active)flash('Hint: '+active.hint)}
 function flash(t){inbox.insertAdjacentHTML('afterbegin',`<p><b>${t}</b></p>`)}
-start.onclick=()=>{S.started=true;S.biz=bizName.value||S.biz;intro.hidden=true;game.hidden=false;sync();makeTask();save()}
+start.onclick=()=>{S.started=true;S.name=playerName?.value||'Player';S.biz=bizName.value||S.biz;intro.hidden=true;game.hidden=false;sync();makeTask();save()}
 chatAppBtn.onclick=openChatApp;
 workShiftBtn.onclick=startWorkShift;
 adultOfficeBtn.onclick=adultOfficeMode;
@@ -326,7 +326,7 @@ function updateAuctionPreview(){
   if(name) name.textContent=item||'Your item preview';
 }
 
-function enterGame(){if(!S.started){S.started=true;S.biz=bizName?.value||S.biz;intro.hidden=true;game.hidden=false;sync();save();}}
+function enterGame(){if(!S.started){S.started=true;S.name=playerName?.value||S.name||'Player';S.biz=bizName?.value||S.biz;intro.hidden=true;game.hidden=false;sync();save();}}
 function openAuction(){
   enterGame();
   const waitLeft=Math.max(0,AUCTION_WAIT-(Date.now()-S.lastAuction));
@@ -373,7 +373,7 @@ function openOffice(){
     <button class="office-phone walk-hotspot" data-thing="Phone" onclick="useOfficeThing('Phone')">☎️<span>Phone</span></button>
     <button class="office-printer walk-hotspot" data-thing="Printer" onclick="useOfficeThing('Printer')">🖨️<span>Printer</span></button>
     ${item('Pink Rug','rug')}${item('Flower Lamp','lamp')}${item('Snack Table','snacks')}${item('Fish Tank','fish')}${item('Mini Couch','couch')}${item('Plant Corner','plant')}${item('Tiny Fountain','fountain')}${item('Office Elevator','elevator')}
-    <div id="tinleyPlayer" class="tinley-player" style="left:${S.player.x}%;top:${S.player.y}%"><div class="avatar-head"></div><div class="avatar-body"></div><div class="avatar-arms"></div><div class="avatar-legs"></div><span>Tinley</span></div>
+    <div id="tinleyPlayer" class="tinley-player" style="left:${S.player.x}%;top:${S.player.y}%"><div class="big-person"><div class="person-head"></div><div class="person-body"></div><div class="person-arm left"></div><div class="person-arm right"></div><div class="person-leg left"></div><div class="person-leg right"></div></div><span>${esc(S.name||'Player')}</span></div>
   </div><div class="move-pad"><button onclick="movePlayer(0,-8)">⬆️</button><button onclick="movePlayer(-8,0)">⬅️</button><button onclick="useNearbyThing()">Use ✨</button><button onclick="movePlayer(8,0)">➡️</button><button onclick="movePlayer(0,8)">⬇️</button></div><div class="office-actions"><button onclick="officeMiniJob('email')">📧 Answer Emails</button><button onclick="officeMiniJob('call')">📞 Take Calls</button><button onclick="officeMiniJob('meeting')">📅 Meeting</button><button onclick="officeMiniJob('pack')">📦 Pack Orders</button></div><p>Office cool score: <b>${S.officeItems.length}</b></p><button onclick="openOfficeShop()">🛋 Open Office Shop</button><button onclick="makeTask()">💻 Back to Work</button></div>`;
   if(modal.open) modal.close();
 }
