@@ -375,15 +375,35 @@ function officeDecor(){return S.officeItems.length?S.officeItems.map(n=>officeCa
 function hasOfficeItem(name){return S.officeItems.includes(name)}
 function openOffice(){
   enterGame();
-  const item=(name,cls)=>hasOfficeItem(name)?`<div class="office-item ${cls}">${officeCatalog.find(i=>i.name===name)?.emoji}</div>`:'';
-  inbox.innerHTML=`<div class="task"><h3>🏢 Tinley’s Real Boss Office</h3><div class="office-room">
-    <div class="office-wall"><div class="window">☀️</div>${item('Neon Sign','neon')}${item('Wall TV','tv')}</div>
+  const item=(name,cls)=>hasOfficeItem(name)?`<button class="office-item ${cls}" onclick="useOfficeThing('${name.replaceAll("'","\\'")}')">${officeCatalog.find(i=>i.name===name)?.emoji}</button>`:'';
+  inbox.innerHTML=`<div class="task"><h3>🏢 Tinley’s Real Boss Office</h3><p>Click things in the office to actually work and earn money.</p><div class="office-room">
+    <div class="office-wall"><button class="window" onclick="useOfficeThing('Window')">☀️</button>${item('Neon Sign','neon')}${item('Wall TV','tv')}</div>
     <div class="office-floor"></div>
-    <div class="office-desk">${hasOfficeItem('Royal Desk')?'👑':'💻'}<br><span>Tinley CEO Desk</span></div>
-    <div class="office-chair">${hasOfficeItem('Gaming Chair')?'💺':'🪑'}</div>
+    <button class="office-desk" onclick="useOfficeThing('CEO Desk')">${hasOfficeItem('Royal Desk')?'👑':'💻'}<br><span>Work Desk</span></button>
+    <button class="office-chair" onclick="useOfficeThing('Chair')">${hasOfficeItem('Gaming Chair')?'💺':'🪑'}</button>
+    <button class="office-phone" onclick="useOfficeThing('Phone')">☎️</button>
+    <button class="office-printer" onclick="useOfficeThing('Printer')">🖨️</button>
     ${item('Pink Rug','rug')}${item('Flower Lamp','lamp')}${item('Snack Table','snacks')}${item('Fish Tank','fish')}${item('Mini Couch','couch')}${item('Plant Corner','plant')}${item('Tiny Fountain','fountain')}${item('Office Elevator','elevator')}
-  </div><p>Office cool score: <b>${S.officeItems.length}</b></p><button onclick="openOfficeShop()">🛋 Open Office Shop</button><button onclick="makeTask()">💻 Back to Work</button></div>`;
+  </div><div class="office-actions"><button onclick="officeMiniJob('email')">📧 Answer Emails</button><button onclick="officeMiniJob('call')">📞 Take Calls</button><button onclick="officeMiniJob('meeting')">📅 Meeting</button><button onclick="officeMiniJob('pack')">📦 Pack Orders</button></div><p>Office cool score: <b>${S.officeItems.length}</b></p><button onclick="openOfficeShop()">🛋 Open Office Shop</button><button onclick="makeTask()">💻 Back to Work</button></div>`;
   if(modal.open) modal.close();
+}
+function officeMiniJob(kind){
+  const jobs={email:['📧 Email Work','Reply to 3 customer emails kindly.'],call:['📞 Phone Work','Help a customer on the phone.'],meeting:['📅 Meeting','Tell your team the plan for today.'],pack:['📦 Order Work','Pack and ship online orders.']};
+  const j=jobs[kind]||jobs.email;
+  openM(j[0], `<p>${j[1]}</p><textarea id="officeJobText" rows="4" maxlength="180" placeholder="Type what Tinley does..."></textarea><br><button onclick="finishOfficeMiniJob('${kind}')">Finish Job ✅</button>`);
+}
+function finishOfficeMiniJob(kind){
+  const text=(document.getElementById('officeJobText')?.value||'').trim();
+  if(text.length<8){showBuyResult('Type what you did first.','#FFB7C5');return;}
+  const pay=25+S.officeItems.length*5+(text.length>35?20:0);
+  S.money+=pay; S.orders++; S.happy=Math.min(100,S.happy+4); sync(); save();
+  mb.innerHTML=`<h3>Office work done ✅</h3><p>Tinley finished real office work.</p><p>You earned <b>$${pay}</b>.</p><button onclick="openOffice()">Back to Office 🏢</button>`;
+}
+function useOfficeThing(name){
+  const rewards={Window:5,Chair:8,Phone:22,Printer:18,'CEO Desk':30,'Snack Table':12,'Fish Tank':10,'Mini Couch':10,'Wall TV':15,'Neon Sign':15,'Office Elevator':35};
+  const pay=rewards[name]||12;
+  S.money+=pay; S.happy=Math.min(100,S.happy+2); sync(); save();
+  flash(`Used ${name}! Earned $${pay} ✨`);
 }
 function openOfficeShop(){
   enterGame();
