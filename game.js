@@ -268,7 +268,27 @@ const upgradedPrompts=[
 function workLevel(){return 1+Math.min(8,S.upgrades.length)}
 
 let active=null;
+let musicOn=false,musicCtx=null,musicTimer=null;
 function save(){localStorage.setItem(saveKey,JSON.stringify(S))}
+function playTone(ctx,freq,start,dur,gain=0.045){
+  const osc=ctx.createOscillator(), vol=ctx.createGain();
+  osc.type='sine'; osc.frequency.value=freq; vol.gain.setValueAtTime(0,start); vol.gain.linearRampToValueAtTime(gain,start+.08); vol.gain.linearRampToValueAtTime(0,start+dur);
+  osc.connect(vol); vol.connect(ctx.destination); osc.start(start); osc.stop(start+dur+.05);
+}
+function musicLoop(){
+  if(!musicOn||!musicCtx)return;
+  const now=musicCtx.currentTime, notes=[261.63,329.63,392.00,523.25,440.00,392.00,329.63,293.66];
+  notes.forEach((n,i)=>playTone(musicCtx,n,now+i*.55,.5));
+  [130.81,196.00,174.61,146.83].forEach((n,i)=>playTone(musicCtx,n,now+i*1.1,1,.03));
+  musicTimer=setTimeout(musicLoop,4300);
+}
+function toggleMusic(){
+  if(!musicCtx) musicCtx=new (window.AudioContext||window.webkitAudioContext)();
+  musicOn=!musicOn;
+  const btn=document.getElementById('musicBtn'); if(btn) btn.textContent=musicOn?'🔇 Stop':'🎵 Music';
+  if(musicOn){musicCtx.resume(); musicLoop(); flash('Relaxing music on 🎵');}
+  else{clearTimeout(musicTimer); flash('Music off 🔇');}
+}
 function sync(){money.textContent=S.money;happy.textContent=S.happy;streak.textContent=S.streak;orders.textContent=S.orders;business.textContent=S.biz;const lvl=document.getElementById('workLevel'); if(lvl) lvl.textContent=workLevel(); clock.textContent=`Day ${S.day} • ${9+Math.floor(S.tick/4)}:${(S.tick%4)*15===0?'00':(S.tick%4)*15} ${9+Math.floor(S.tick/4)>=12?'PM':'AM'}`;upgrades.innerHTML=S.upgrades.map(u=>`<li>✅ ${u}</li>`).join('')||'<li>No upgrades yet</li>'}
 function upgradePayBonus(){return S.upgrades.length*4+S.upgrades.filter(u=>u.includes('VIP')||u.includes('Rainbow')||u.includes('Team')||u.includes('CEO')||u.includes('Castle')||u.includes('Global')||u.includes('Celebrity')).length*10}
 function openUpgradeShop(){
@@ -441,5 +461,5 @@ function buyOfficeItem(i){
   S.money-=it.cost; S.officeItems.push(it.name); S.happy=Math.min(100,S.happy+3); sync(); save(); openOfficeShop();
 }
 reset.onclick=()=>{if(confirm('Reset game?')){localStorage.removeItem(saveKey);location.reload()}}
-function openM(t,b){mt.textContent=t;mb.innerHTML=b;modal.showModal()} window.submitTyped=submitTyped; window.showHint=showHint; window.openAuction=openAuction; window.startAuction=startAuction; window.auctionHype=auctionHype; window.finishAuction=finishAuction; window.updateAuctionPreview=updateAuctionPreview; window.openProposalDesk=openProposalDesk; window.startProposal=startProposal; window.submitProposal=submitProposal; window.proposalHint=proposalHint; window.adultOfficeMode=adultOfficeMode; window.clientMeeting=clientMeeting; window.makeInvoice=makeInvoice; window.writeReport=writeReport; window.approveRequest=approveRequest; window.performanceReview=performanceReview; window.budgetPlan=budgetPlan; window.submitOfficeWork=submitOfficeWork; window.openUpgradeShop=openUpgradeShop; window.buyUpgrade=buyUpgrade; window.buyNextUpgrade=buyNextUpgrade; window.openOffice=openOffice; window.openOfficeShop=openOfficeShop; window.buyOfficeItem=buyOfficeItem; window.startWorkShift=startWorkShift; window.doShiftTask=doShiftTask; window.submitShiftTask=submitShiftTask; window.shiftTaskHint=shiftTaskHint; window.finishShift=finishShift; window.openChatApp=openChatApp; window.renderChats=renderChats; window.sendChatReply=sendChatReply; window.chatHint=chatHint;
+function openM(t,b){mt.textContent=t;mb.innerHTML=b;modal.showModal()} window.toggleMusic=toggleMusic; window.submitTyped=submitTyped; window.showHint=showHint; window.openAuction=openAuction; window.startAuction=startAuction; window.auctionHype=auctionHype; window.finishAuction=finishAuction; window.updateAuctionPreview=updateAuctionPreview; window.openProposalDesk=openProposalDesk; window.startProposal=startProposal; window.submitProposal=submitProposal; window.proposalHint=proposalHint; window.adultOfficeMode=adultOfficeMode; window.clientMeeting=clientMeeting; window.makeInvoice=makeInvoice; window.writeReport=writeReport; window.approveRequest=approveRequest; window.performanceReview=performanceReview; window.budgetPlan=budgetPlan; window.submitOfficeWork=submitOfficeWork; window.openUpgradeShop=openUpgradeShop; window.buyUpgrade=buyUpgrade; window.buyNextUpgrade=buyNextUpgrade; window.openOffice=openOffice; window.openOfficeShop=openOfficeShop; window.buyOfficeItem=buyOfficeItem; window.startWorkShift=startWorkShift; window.doShiftTask=doShiftTask; window.submitShiftTask=submitShiftTask; window.shiftTaskHint=shiftTaskHint; window.finishShift=finishShift; window.openChatApp=openChatApp; window.renderChats=renderChats; window.sendChatReply=sendChatReply; window.chatHint=chatHint;
 if(S.started){intro.hidden=true;game.hidden=false;sync();makeTask()} else sync();
