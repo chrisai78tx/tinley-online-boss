@@ -47,7 +47,7 @@ const officeCatalog=[
   {name:'Office Elevator',emoji:'🛗',cost:2500}
 ];
 let S=JSON.parse(localStorage.getItem(saveKey)||'null')||{started:false,biz:"Tinley's Play World Shop",money:0,happy:50,streak:0,orders:0,day:1,tick:0,upgrades:[],officeItems:[],lastAuction:0};
-S.upgrades ||= []; S.officeItems ||= []; S.lastAuction ||= 0;
+S.upgrades ||= []; S.officeItems ||= []; S.lastAuction ||= 0; S.player ||= {x:50,y:72};
 
 
 
@@ -375,18 +375,34 @@ function officeDecor(){return S.officeItems.length?S.officeItems.map(n=>officeCa
 function hasOfficeItem(name){return S.officeItems.includes(name)}
 function openOffice(){
   enterGame();
-  const item=(name,cls)=>hasOfficeItem(name)?`<button class="office-item ${cls}" onclick="useOfficeThing('${name.replaceAll("'","\\'")}')">${officeCatalog.find(i=>i.name===name)?.emoji}</button>`:'';
-  inbox.innerHTML=`<div class="task"><h3>🏢 Tinley’s Real Boss Office</h3><p>Click things in the office to actually work and earn money.</p><div class="office-room">
-    <div class="office-wall"><button class="window" onclick="useOfficeThing('Window')">☀️</button>${item('Neon Sign','neon')}${item('Wall TV','tv')}</div>
+  const item=(name,cls,label=name)=>hasOfficeItem(name)?`<button class="office-item ${cls}" data-thing="${name}" onclick="useOfficeThing('${name.replaceAll("'","\\'")}')">${officeCatalog.find(i=>i.name===name)?.emoji}<span>${label}</span></button>`:'';
+  inbox.innerHTML=`<div class="task"><h3>🏢 Tinley’s Walk-Around Office</h3><p>Move Tinley around, then press <b>Use</b> near things.</p><div class="office-room walk-room" id="officeRoom">
+    <div class="office-wall"><button class="window walk-hotspot" data-thing="Window" onclick="useOfficeThing('Window')">☀️<span>Window</span></button>${item('Neon Sign','neon')}${item('Wall TV','tv')}</div>
     <div class="office-floor"></div>
-    <button class="office-desk" onclick="useOfficeThing('CEO Desk')">${hasOfficeItem('Royal Desk')?'👑':'💻'}<br><span>Work Desk</span></button>
-    <button class="office-chair" onclick="useOfficeThing('Chair')">${hasOfficeItem('Gaming Chair')?'💺':'🪑'}</button>
-    <button class="office-phone" onclick="useOfficeThing('Phone')">☎️</button>
-    <button class="office-printer" onclick="useOfficeThing('Printer')">🖨️</button>
+    <button class="office-desk walk-hotspot" data-thing="CEO Desk" onclick="useOfficeThing('CEO Desk')">${hasOfficeItem('Royal Desk')?'👑':'💻'}<br><span>Desk</span></button>
+    <button class="office-chair walk-hotspot" data-thing="Chair" onclick="useOfficeThing('Chair')">${hasOfficeItem('Gaming Chair')?'💺':'🪑'}<span>Chair</span></button>
+    <button class="office-phone walk-hotspot" data-thing="Phone" onclick="useOfficeThing('Phone')">☎️<span>Phone</span></button>
+    <button class="office-printer walk-hotspot" data-thing="Printer" onclick="useOfficeThing('Printer')">🖨️<span>Printer</span></button>
     ${item('Pink Rug','rug')}${item('Flower Lamp','lamp')}${item('Snack Table','snacks')}${item('Fish Tank','fish')}${item('Mini Couch','couch')}${item('Plant Corner','plant')}${item('Tiny Fountain','fountain')}${item('Office Elevator','elevator')}
-  </div><div class="office-actions"><button onclick="officeMiniJob('email')">📧 Answer Emails</button><button onclick="officeMiniJob('call')">📞 Take Calls</button><button onclick="officeMiniJob('meeting')">📅 Meeting</button><button onclick="officeMiniJob('pack')">📦 Pack Orders</button></div><p>Office cool score: <b>${S.officeItems.length}</b></p><button onclick="openOfficeShop()">🛋 Open Office Shop</button><button onclick="makeTask()">💻 Back to Work</button></div>`;
+    <div id="tinleyPlayer" class="tinley-player" style="left:${S.player.x}%;top:${S.player.y}%">🧍‍♀️<span>Tinley</span></div>
+  </div><div class="move-pad"><button onclick="movePlayer(0,-8)">⬆️</button><button onclick="movePlayer(-8,0)">⬅️</button><button onclick="useNearbyThing()">Use ✨</button><button onclick="movePlayer(8,0)">➡️</button><button onclick="movePlayer(0,8)">⬇️</button></div><div class="office-actions"><button onclick="officeMiniJob('email')">📧 Answer Emails</button><button onclick="officeMiniJob('call')">📞 Take Calls</button><button onclick="officeMiniJob('meeting')">📅 Meeting</button><button onclick="officeMiniJob('pack')">📦 Pack Orders</button></div><p>Office cool score: <b>${S.officeItems.length}</b></p><button onclick="openOfficeShop()">🛋 Open Office Shop</button><button onclick="makeTask()">💻 Back to Work</button></div>`;
   if(modal.open) modal.close();
 }
+function movePlayer(dx,dy){
+  S.player.x=Math.max(6,Math.min(92,S.player.x+dx));
+  S.player.y=Math.max(24,Math.min(86,S.player.y+dy));
+  const p=document.getElementById('tinleyPlayer'); if(p){p.style.left=S.player.x+'%'; p.style.top=S.player.y+'%';}
+  save();
+}
+function useNearbyThing(){
+  const spots=[
+    {name:'CEO Desk',x:50,y:58},{name:'Chair',x:50,y:44},{name:'Phone',x:61,y:48},{name:'Printer',x:30,y:53},{name:'Window',x:18,y:25},
+    {name:'Snack Table',x:75,y:70},{name:'Fish Tank',x:13,y:62},{name:'Mini Couch',x:18,y:78},{name:'Plant Corner',x:88,y:78},{name:'Wall TV',x:50,y:22},{name:'Office Elevator',x:72,y:48}
+  ];
+  let best=spots.map(s=>({...s,d:Math.hypot(S.player.x-s.x,S.player.y-s.y)})).sort((a,b)=>a.d-b.d)[0];
+  if(best&&best.d<28) useOfficeThing(best.name); else flash('Walk closer to something first!');
+}
+window.addEventListener('keydown',e=>{if(!document.getElementById('tinleyPlayer'))return; if(e.key==='ArrowUp'||e.key==='w')movePlayer(0,-8); if(e.key==='ArrowDown'||e.key==='s')movePlayer(0,8); if(e.key==='ArrowLeft'||e.key==='a')movePlayer(-8,0); if(e.key==='ArrowRight'||e.key==='d')movePlayer(8,0); if(e.key===' '||e.key==='Enter')useNearbyThing();});
 function officeMiniJob(kind){
   const jobs={email:['📧 Email Work','Reply to 3 customer emails kindly.'],call:['📞 Phone Work','Help a customer on the phone.'],meeting:['📅 Meeting','Tell your team the plan for today.'],pack:['📦 Order Work','Pack and ship online orders.']};
   const j=jobs[kind]||jobs.email;
