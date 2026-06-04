@@ -372,9 +372,17 @@ function finishAuction(bid){
 }
 
 function officeDecor(){return S.officeItems.length?S.officeItems.map(n=>officeCatalog.find(i=>i.name===n)?.emoji||'🎁').join(' '):'📦 empty office'}
+function hasOfficeItem(name){return S.officeItems.includes(name)}
 function openOffice(){
   enterGame();
-  inbox.innerHTML=`<div class="task"><h3>🏢 Tinley’s Cool Office</h3><p style="font-size:54px;line-height:1.5;background:#fff0fb;border-radius:20px;padding:18px;text-align:center">${officeDecor()}</p><p>Office cool score: <b>${S.officeItems.length}</b></p><button onclick="openOfficeShop()">🛋 Open Office Shop</button><button onclick="makeTask()">💻 Back to Work</button></div>`;
+  const item=(name,cls)=>hasOfficeItem(name)?`<div class="office-item ${cls}">${officeCatalog.find(i=>i.name===name)?.emoji}</div>`:'';
+  inbox.innerHTML=`<div class="task"><h3>🏢 Tinley’s Real Boss Office</h3><div class="office-room">
+    <div class="office-wall"><div class="window">☀️</div>${item('Neon Sign','neon')}${item('Wall TV','tv')}</div>
+    <div class="office-floor"></div>
+    <div class="office-desk">${hasOfficeItem('Royal Desk')?'👑':'💻'}<br><span>Tinley CEO Desk</span></div>
+    <div class="office-chair">${hasOfficeItem('Gaming Chair')?'💺':'🪑'}</div>
+    ${item('Pink Rug','rug')}${item('Flower Lamp','lamp')}${item('Snack Table','snacks')}${item('Fish Tank','fish')}${item('Mini Couch','couch')}${item('Plant Corner','plant')}${item('Tiny Fountain','fountain')}${item('Office Elevator','elevator')}
+  </div><p>Office cool score: <b>${S.officeItems.length}</b></p><button onclick="openOfficeShop()">🛋 Open Office Shop</button><button onclick="makeTask()">💻 Back to Work</button></div>`;
   if(modal.open) modal.close();
 }
 function openOfficeShop(){
