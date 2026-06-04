@@ -1,5 +1,53 @@
 const saveKey='tinley-online-boss-v2';
-let S=JSON.parse(localStorage.getItem(saveKey)||'null')||{started:false,biz:"Tinley's Play World Shop",money:0,happy:50,streak:0,orders:0,day:1,tick:0,upgrades:[]};
+const AUCTION_WAIT=5*60*1000;
+const upgradeCatalog=[
+  {name:'Better Laptop 💻',cost:100,perk:'+4 pay on typed work'},
+  {name:'Cute Headset 🎧',cost:125,perk:'happier customers'},
+  {name:'Fast Wi‑Fi 📶',cost:150,perk:'unlocks harder jobs'},
+  {name:'Auto Email Helper 🤖',cost:175,perk:'more work bonuses'},
+  {name:'Pink Office Chair 🪑',cost:200,perk:'comfy boss office'},
+  {name:'Ring Light 🎥',cost:225,perk:'better video calls'},
+  {name:'Sticker Printer 🌈',cost:250,perk:'sell cute stickers'},
+  {name:'Shipping Station 📦',cost:275,perk:'pack orders faster'},
+  {name:'Boss Desk ✨',cost:300,perk:'professional office'},
+  {name:'Customer Bot 💬',cost:350,perk:'message helper'},
+  {name:'Ad Studio 📣',cost:400,perk:'launch ads'},
+  {name:'Mini Warehouse 🏬',cost:475,perk:'bigger orders'},
+  {name:'VIP Client List 👑',cost:550,perk:'premium clients'},
+  {name:'Team Helper 👩‍💼',cost:650,perk:'extra shift power'},
+  {name:'Rainbow HQ 🏢',cost:800,perk:'ultimate boss upgrade'},
+  {name:'Glitter Keyboard ⌨️',cost:900,perk:'faster typing power'},
+  {name:'Boss Planner 📒',cost:1000,perk:'better daily goals'},
+  {name:'Photo Booth 📸',cost:1150,perk:'make product photos'},
+  {name:'Delivery Van 🚚',cost:1300,perk:'ship big orders'},
+  {name:'Podcast Mic 🎙️',cost:1500,perk:'record business ads'},
+  {name:'Influencer Collab 🤝',cost:1750,perk:'more customers'},
+  {name:'Billboard Ad 🪧',cost:2000,perk:'huge attention'},
+  {name:'Toy Factory 🧸',cost:2400,perk:'make your own products'},
+  {name:'Business School 🎓',cost:2800,perk:'smarter boss choices'},
+  {name:'Executive Assistant 🗂️',cost:3250,perk:'helps with paperwork'},
+  {name:'Luxury Office Tower 🌆',cost:3750,perk:'super fancy office'},
+  {name:'Global Website 🌎',cost:4300,perk:'sell around the world'},
+  {name:'Celebrity Customer ⭐',cost:5000,perk:'famous client bonus'},
+  {name:'CEO Crown 👸',cost:6000,perk:'Tinley becomes CEO'},
+  {name:'Dream Company Castle 🏰',cost:7500,perk:'final mega upgrade'}
+];
+const officeCatalog=[
+  {name:'Pink Rug',emoji:'💗',cost:75},
+  {name:'Flower Lamp',emoji:'🌸',cost:120},
+  {name:'Gaming Chair',emoji:'💺',cost:180},
+  {name:'Snack Table',emoji:'🍪',cost:220},
+  {name:'Fish Tank',emoji:'🐠',cost:300},
+  {name:'Neon Sign',emoji:'✨',cost:400},
+  {name:'Mini Couch',emoji:'🛋️',cost:550},
+  {name:'Plant Corner',emoji:'🪴',cost:700},
+  {name:'Wall TV',emoji:'📺',cost:900},
+  {name:'Tiny Fountain',emoji:'⛲',cost:1200},
+  {name:'Royal Desk',emoji:'👑',cost:1700},
+  {name:'Office Elevator',emoji:'🛗',cost:2500}
+];
+let S=JSON.parse(localStorage.getItem(saveKey)||'null')||{started:false,biz:"Tinley's Play World Shop",money:0,happy:50,streak:0,orders:0,day:1,tick:0,upgrades:[],officeItems:[],lastAuction:0};
+S.upgrades ||= []; S.officeItems ||= []; S.lastAuction ||= 0;
 
 
 
@@ -17,7 +65,7 @@ function adultOfficeMode(){
   `);
 }
 function officePrompt(title,question,need,pay){
-  mb.innerHTML=`<h3>${title}</h3><p>${question}</p><textarea id="officeText" rows="5" maxlength="240" placeholder="Type a professional adult-work answer..."></textarea><br><button onclick="submitOfficeWork('${title.replaceAll("'","\\'")}', '${need}', ${pay})">Submit Work ✅</button><button onclick="showBuyResult('Hint: include ${need.replaceAll('|',' and ')} in your answer.','#C7CEEA')">Hint 🌟</button>`;
+  mb.innerHTML=`<h3>${title}</h3><p>${question}</p><textarea id="officeText" rows="5" maxlength="240" placeholder="Type a professional adult-work answer..."></textarea><br><button onclick="submitOfficeWork('${title.replaceAll("'","\\'")}', '${need}', ${pay})">Submit Work ✅</button>`;
 }
 function submitOfficeWork(title,need,pay){
   const text=(document.getElementById('officeText')?.value||'').trim().toLowerCase();
@@ -52,7 +100,7 @@ function openProposalDesk(){
 }
 function startProposal(i){
   activeProposal=proposalClients[i];
-  mb.innerHTML=`<h3>📋 Proposal for ${activeProposal.client}</h3><p><b>Client needs:</b> ${activeProposal.ask}</p><p>Write your proposal. Include: what you will make, how it helps, and why they should pick you.</p><textarea id="proposalText" rows="8" maxlength="500" placeholder="Dear ${activeProposal.client}, I can help by..."></textarea><br><button onclick="submitProposal()">Submit Proposal ✅</button><button onclick="proposalHint()">Hint 🌟</button>`;
+  mb.innerHTML=`<h3>📋 Proposal for ${activeProposal.client}</h3><p><b>Client needs:</b> ${activeProposal.ask}</p><p>Write your proposal. Include: what you will make, how it helps, and why they should pick you.</p><textarea id="proposalText" rows="8" maxlength="500" placeholder="Dear ${activeProposal.client}, I can help by..."></textarea><br><button onclick="submitProposal()">Submit Proposal ✅</button>`;
 }
 function proposalHint(){
   if(!activeProposal)return;
@@ -94,7 +142,7 @@ function renderShift(){
 }
 function doShiftTask(i){
   const t=shift.tasks[i]; if(!t||t.done)return;
-  mb.innerHTML=`<h3>${t.emoji} ${t.name}</h3><p>${t.need}</p><p>Type what you would do for this work task:</p><textarea id="shiftReply" rows="4" maxlength="180" placeholder="Example: I will help the customer and check the order..."></textarea><br><button onclick="submitShiftTask(${i})">Submit Work ✅</button><button onclick="shiftTaskHint(${i})">Hint 🌟</button>`;
+  mb.innerHTML=`<h3>${t.emoji} ${t.name}</h3><p>${t.need}</p><p>Type what you would do for this work task:</p><textarea id="shiftReply" rows="4" maxlength="180" placeholder="Example: I will help the customer and check the order..."></textarea><br><button onclick="submitShiftTask(${i})">Submit Work ✅</button>`;
 }
 function submitShiftTask(i){
   const text=(document.getElementById('shiftReply')?.value||'').trim();
@@ -131,7 +179,7 @@ function ensureChats(){
 function openChatApp(){
   ensureChats();
   openM('Messages App 💬', `<div style="display:grid;grid-template-columns:130px 1fr;gap:10px;min-height:360px">
-    <div id="chatList"></div><div><div id="chatWindow"></div><textarea id="chatReply" rows="3" maxlength="160" placeholder="Type your reply..."></textarea><br><button onclick="sendChatReply()">Send 💬</button><button onclick="chatHint()">Hint 🌟</button></div>
+    <div id="chatList"></div><div><div id="chatWindow"></div><textarea id="chatReply" rows="3" maxlength="160" placeholder="Type your reply..."></textarea><br><button onclick="sendChatReply()">Send 💬</button></div>
   </div>`);
   renderChats();
 }
@@ -200,22 +248,63 @@ const upgradedPrompts=[
  {type:'msg',q:'Manager message: “Can you make a daily work schedule for calls, emails, and orders?”',need:['schedule','calls','emails'],hint:'Mention a daily schedule for calls and emails.',level:4},
  {type:'proposal',q:'Proposal request: “Create a customer service plan for a busy online business.”',need:['customer','service','business'],hint:'Mention customer service for the business.',level:4}
 ];
-function workLevel(){return 1+Math.min(4,S.upgrades.length)}
+function workLevel(){return 1+Math.min(8,S.upgrades.length)}
 
 let active=null;
 function save(){localStorage.setItem(saveKey,JSON.stringify(S));flash('Saved! 💾')}
 function sync(){money.textContent=S.money;happy.textContent=S.happy;streak.textContent=S.streak;orders.textContent=S.orders;business.textContent=S.biz;const lvl=document.getElementById('workLevel'); if(lvl) lvl.textContent=workLevel(); clock.textContent=`Day ${S.day} • ${9+Math.floor(S.tick/4)}:${(S.tick%4)*15===0?'00':(S.tick%4)*15} ${9+Math.floor(S.tick/4)>=12?'PM':'AM'}`;upgrades.innerHTML=S.upgrades.map(u=>`<li>✅ ${u}</li>`).join('')||'<li>No upgrades yet</li>'}
+function upgradePayBonus(){return S.upgrades.length*4+S.upgrades.filter(u=>u.includes('VIP')||u.includes('Rainbow')||u.includes('Team')||u.includes('CEO')||u.includes('Castle')||u.includes('Global')||u.includes('Celebrity')).length*10}
+function openUpgradeShop(){
+  const rows=upgradeCatalog.map((u,i)=>{
+    const owned=S.upgrades.includes(u.name);
+    const afford=S.money>=u.cost;
+    return `<div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;background:${owned?'#dcffd9':afford?'#fff7fb':'#eeeeee'};border-radius:16px;padding:10px;margin:8px 0"><div><b>${u.name}</b><br><span class="tiny">$${u.cost} • ${u.perk}</span></div>${owned?'✅ Owned':`<button onclick="buyUpgrade(${i})">${afford?'Buy':'Need $'+(u.cost-S.money)}</button>`}</div>`;
+  }).join('');
+  openM('Upgrade Shop 🛍', `<p>Money: <b>$${S.money}</b></p><p>Buy more boss upgrades to earn more money and unlock bigger work.</p><button onclick="buyNextUpgrade()">Buy Next Upgrade ✅</button>${rows}`);
+}
+function buyNextUpgrade(){
+  const i=upgradeCatalog.findIndex(u=>!S.upgrades.includes(u.name)&&S.money>=u.cost);
+  if(i<0){showBuyResult('No upgrade is affordable yet — earn more money first.','#FFB7C5');return;}
+  buyUpgrade(i);
+}
+function buyUpgrade(i){
+  const u=upgradeCatalog[i]; if(!u)return;
+  if(S.upgrades.includes(u.name)){showBuyResult('You already own that upgrade.','#C7CEEA');return;}
+  if(S.money<u.cost){showBuyResult(`Need $${u.cost} for ${u.name}.`,'#FFB7C5');return;}
+  S.money-=u.cost; S.upgrades.push(u.name); S.happy=Math.min(100,S.happy+5);
+  addNews('🛍 Bought upgrade: '+u.name);
+  sync(); save(); openUpgradeShop(); flash('Bought '+u.name+'!');
+}
+function showBuyResult(msg,color){
+  const note=document.createElement('p'); note.innerHTML='<b>'+esc(msg)+'</b>'; note.style.background=color; note.style.color='#49365c'; note.style.padding='10px'; note.style.borderRadius='14px'; mb.prepend(note);
+}
+function addNews(msg){flash(msg)}
 function rand(a){return a[Math.floor(Math.random()*a.length)]}
 function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-function makeTask(){const pool=prompts.concat(upgradedPrompts.filter(p=>p.level<=workLevel())); active=rand(pool);inbox.innerHTML=`<div class="task ${active.type}"><h3>${types[active.type]}</h3><p>${active.q}</p><p><b>Type your own business reply:</b></p><textarea id="replyBox" rows="4" maxlength="180" placeholder="Type a kind helpful answer..."></textarea><div><button onclick="submitTyped()">Send Reply ✅</button><button onclick="showHint()">Need help? 🌟 Hint</button></div><p class="tiny">Tip: kind words + the important customer problem = best score.</p></div>`;setTimeout(()=>replyBox?.focus(),100)}
+function makeTask(){const pool=prompts.concat(upgradedPrompts.filter(p=>p.level<=workLevel())); active=rand(pool);inbox.innerHTML=`<div class="task ${active.type}"><h3>${types[active.type]}</h3><p>${active.q}</p><p><b>Type your own business reply:</b></p><textarea id="replyBox" rows="4" maxlength="180" placeholder="Type a kind helpful answer..."></textarea><div><button onclick="submitTyped()">Send Reply ✅</button></div><p class="tiny">Tip: kind words + the important customer problem = best score.</p></div>`;setTimeout(()=>replyBox?.focus(),100)}
 function grade(text){const t=text.toLowerCase();let score=0;if(t.length>=8)score++;if(['please','thanks','thank','sorry','happy','help','sure','yes'].some(w=>t.includes(w)))score++;score+=active.need.filter(w=>t.includes(w)).length;return score}
-function submitTyped(){if(!active)return;const text=(replyBox.value||'').trim();if(!text){flash('Type your answer first!');return}const score=grade(text);if(score>=3){S.money+=(active.type==='proposal'?30:15)+(S.upgrades.length*4);S.happy=Math.min(100,S.happy+6);S.streak++;S.orders++;flash(`Great typed reply! ⭐ You wrote: “${esc(text)}”`)}else if(score>=2){S.money+=(active.type==='proposal'?15:7)+(S.upgrades.length*2);S.happy=Math.min(100,S.happy+1);S.streak=0;S.orders++;flash(`Okay reply! Try adding more helpful details next time.`)}else{S.happy=Math.max(0,S.happy-8);S.streak=0;flash('Oops! Make it kinder and answer the customer problem.')}S.tick++;if(S.tick>=32){S.day++;S.tick=0;S.money+=S.happy>70?50:15;flash('Work day finished! Bonus paid 🎉')}active=null;sync();save();setTimeout(makeTask,900)}
+function submitTyped(){if(!active)return;const text=(replyBox.value||'').trim();if(!text){flash('Type your answer first!');return}const score=grade(text);if(score>=3){S.money+=(active.type==='proposal'?30:15)+upgradePayBonus();S.happy=Math.min(100,S.happy+6);S.streak++;S.orders++;flash(`Great typed reply! ⭐ You wrote: “${esc(text)}”`)}else if(score>=2){S.money+=(active.type==='proposal'?15:7)+Math.floor(upgradePayBonus()/2);S.happy=Math.min(100,S.happy+1);S.streak=0;S.orders++;flash(`Okay reply! Try adding more helpful details next time.`)}else{S.happy=Math.max(0,S.happy-8);S.streak=0;flash('Oops! Make it kinder and answer the customer problem.')}S.tick++;if(S.tick>=32){S.day++;S.tick=0;S.money+=S.happy>70?50:15;flash('Work day finished! Bonus paid 🎉')}active=null;sync();save();setTimeout(makeTask,900)}
 function showHint(){if(active)flash('Hint: '+active.hint)}
 function flash(t){inbox.insertAdjacentHTML('afterbegin',`<p><b>${t}</b></p>`)}
 start.onclick=()=>{S.started=true;S.biz=bizName.value||S.biz;intro.hidden=true;game.hidden=false;sync();makeTask();save()}
-auctionBtn.onclick=openAuction; chatAppBtn.onclick=openChatApp; workShiftBtn.onclick=startWorkShift; adultOfficeBtn.onclick=adultOfficeMode; proposalBtn.onclick=openProposalDesk;
-tutorial.onclick=()=>openM('Tutorial 🌟','<ol><li>Read the call/message/email.</li><li>Type your own kind answer.</li><li>Include the important words, like order, refund, password, or link.</li><li>If stuck, press Hint.</li><li>Earn money and buy upgrades.</li><li>Every upgrade unlocks more work, harder questions, and proposals.</li></ol>')
-upgrade.onclick=()=>{if(S.money<100)return flash('Need $100 for an upgrade.');const all=['Better Laptop 💻','Cute Headset 🎧','Fast Wi‑Fi 📶','Auto Email Helper 🤖','Pink Office Chair 🪑'];const u=all.find(x=>!S.upgrades.includes(x));if(!u)return flash('You bought all upgrades!');S.money-=100;S.upgrades.push(u);sync();save();flash('Bought '+u+' — more work unlocked!')}
+function addButtonIfMissing(id,text,fn,beforeId='auctionBtn'){
+  let btn=document.getElementById(id);
+  if(!btn){
+    btn=document.createElement('button'); btn.id=id; btn.textContent=text;
+    const before=document.getElementById(beforeId), side=document.querySelector('.side');
+    if(before&&before.parentNode) before.parentNode.insertBefore(btn,before); else side?.appendChild(btn);
+  }
+  btn.onclick=fn;
+}
+addButtonIfMissing('officeBtn','🏢 Teleport to Office',openOffice);
+addButtonIfMissing('officeShopBtn','🛋 Office Shop',openOfficeShop);
+addButtonIfMissing('auctionBtn','🔨 Create Your Own Auction',openAuction);
+addButtonIfMissing('chatAppBtn','💬 Open Messages App',openChatApp);
+addButtonIfMissing('workShiftBtn','🏢 Start Real Work Shift',startWorkShift);
+addButtonIfMissing('adultOfficeBtn','💼 Adult Office Mode',adultOfficeMode);
+addButtonIfMissing('proposalBtn','📋 Do a Proposal',openProposalDesk);
+addButtonIfMissing('upgrade','🛍 Open Upgrade Shop',openUpgradeShop);
+addButtonIfMissing('tutorial','🌟 Tutorial',()=>openM('Tutorial 🌟','<ol><li>Read the call/message/email.</li><li>Type your own kind answer.</li><li>Include the important words, like order, refund, password, or link.</li><li>Earn money and buy upgrades.</li><li>Every upgrade unlocks more work, harder questions, and proposals.</li><li>Auctions need a 5 minute wait after each sale.</li></ol>'));
 
 
 function itemPicture(text){
@@ -250,7 +339,11 @@ function updateAuctionPreview(){
   if(name) name.textContent=item||'Your item preview';
 }
 
+function enterGame(){if(!S.started){S.started=true;S.biz=bizName?.value||S.biz;intro.hidden=true;game.hidden=false;sync();save();}}
 function openAuction(){
+  enterGame();
+  const waitLeft=Math.max(0,AUCTION_WAIT-(Date.now()-S.lastAuction));
+  if(waitLeft>0){const m=Math.floor(waitLeft/60000),s=Math.ceil((waitLeft%60000)/1000); openM('Auction Waiting ⏳', `<p>You already did an auction. Wait <b>${m}:${String(s).padStart(2,'0')}</b> before the next one.</p><button onclick="openOffice()">Teleport to Office 🏢</button>`); return;}
   openM('Create Your Own Auction 🔨', `
     <p>You are the host! Pick an item, write a cute description, then start bidding.</p>
     <div style="text-align:center;background:#fff0fb;border:3px dashed #ff9bd3;border-radius:18px;padding:12px;margin-bottom:10px"><div id="auctionPic" style="font-size:64px">🎁</div><b id="auctionPicName">Cute Mystery Box</b><p class="tiny">This picture changes when you type!</p></div>
@@ -273,11 +366,28 @@ function auctionHype(item,bid,round){
   mb.innerHTML=`<div style="text-align:center;font-size:70px">${itemPicture(item)}</div><h3>🎤 Hosting: ${item}</h3><p>You hyped it up! Buyers are excited!</p><p id="auctionBid">Current bid: $${bid}</p><p id="auctionRound">Round ${round}/3</p><button onclick="auctionHype('${item}',${bid},${round})">📣 Hype again</button><button onclick="finishAuction(${bid})">Sell Now 💵</button>`;
 }
 function finishAuction(bid){
-  S.money+=bid; S.happy=Math.min(100,S.happy+10); S.orders++; S.streak++;
+  S.money+=bid; S.happy=Math.min(100,S.happy+10); S.orders++; S.streak++; S.lastAuction=Date.now();
   sync(); save();
   mb.innerHTML=`<h3>Sold! 🎉</h3><p>You hosted the auction and sold it for <b>$${bid}</b>!</p><p>You are a great auction host 🔨✨</p>`;
 }
 
+function officeDecor(){return S.officeItems.length?S.officeItems.map(n=>officeCatalog.find(i=>i.name===n)?.emoji||'🎁').join(' '):'📦 empty office'}
+function openOffice(){
+  enterGame();
+  inbox.innerHTML=`<div class="task"><h3>🏢 Tinley’s Cool Office</h3><p style="font-size:54px;line-height:1.5;background:#fff0fb;border-radius:20px;padding:18px;text-align:center">${officeDecor()}</p><p>Office cool score: <b>${S.officeItems.length}</b></p><button onclick="openOfficeShop()">🛋 Open Office Shop</button><button onclick="makeTask()">💻 Back to Work</button></div>`;
+  if(modal.open) modal.close();
+}
+function openOfficeShop(){
+  enterGame();
+  const rows=officeCatalog.map((it,i)=>{const owned=S.officeItems.includes(it.name), afford=S.money>=it.cost;return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;background:${owned?'#dcffd9':'#fff7fb'};border-radius:16px;padding:10px;margin:8px 0"><span style="font-size:28px">${it.emoji}</span><div><b>${it.name}</b><br><span class="tiny">$${it.cost}</span></div>${owned?'✅ Owned':`<button ${afford?'':'disabled'} onclick="buyOfficeItem(${i})">Buy</button>`}</div>`}).join('');
+  openM('Office Shop 🛋', `<p>Buy things to make your office look cool.</p>${rows}<button onclick="openOffice()">Teleport to Office 🏢</button>`);
+}
+function buyOfficeItem(i){
+  const it=officeCatalog[i]; if(!it)return;
+  if(S.officeItems.includes(it.name)){showBuyResult('You already have that in your office.','#C7CEEA');return;}
+  if(S.money<it.cost){showBuyResult(`Need $${it.cost} for ${it.name}.`,'#FFB7C5');return;}
+  S.money-=it.cost; S.officeItems.push(it.name); S.happy=Math.min(100,S.happy+3); sync(); save(); openOfficeShop();
+}
 reset.onclick=()=>{if(confirm('Reset game?')){localStorage.removeItem(saveKey);location.reload()}}
-save.onclick=save;function openM(t,b){mt.textContent=t;mb.innerHTML=b;modal.showModal()} window.submitTyped=submitTyped; window.showHint=showHint; window.openAuction=openAuction; window.startAuction=startAuction; window.auctionHype=auctionHype; window.finishAuction=finishAuction; window.updateAuctionPreview=updateAuctionPreview; window.openProposalDesk=openProposalDesk; window.startProposal=startProposal; window.submitProposal=submitProposal; window.proposalHint=proposalHint; window.adultOfficeMode=adultOfficeMode; window.clientMeeting=clientMeeting; window.makeInvoice=makeInvoice; window.writeReport=writeReport; window.approveRequest=approveRequest; window.performanceReview=performanceReview; window.budgetPlan=budgetPlan; window.submitOfficeWork=submitOfficeWork; window.startWorkShift=startWorkShift; window.doShiftTask=doShiftTask; window.submitShiftTask=submitShiftTask; window.shiftTaskHint=shiftTaskHint; window.finishShift=finishShift; window.openChatApp=openChatApp; window.renderChats=renderChats; window.sendChatReply=sendChatReply; window.chatHint=chatHint;
+save.onclick=save;function openM(t,b){mt.textContent=t;mb.innerHTML=b;modal.showModal()} window.submitTyped=submitTyped; window.showHint=showHint; window.openAuction=openAuction; window.startAuction=startAuction; window.auctionHype=auctionHype; window.finishAuction=finishAuction; window.updateAuctionPreview=updateAuctionPreview; window.openProposalDesk=openProposalDesk; window.startProposal=startProposal; window.submitProposal=submitProposal; window.proposalHint=proposalHint; window.adultOfficeMode=adultOfficeMode; window.clientMeeting=clientMeeting; window.makeInvoice=makeInvoice; window.writeReport=writeReport; window.approveRequest=approveRequest; window.performanceReview=performanceReview; window.budgetPlan=budgetPlan; window.submitOfficeWork=submitOfficeWork; window.openUpgradeShop=openUpgradeShop; window.buyUpgrade=buyUpgrade; window.buyNextUpgrade=buyNextUpgrade; window.openOffice=openOffice; window.openOfficeShop=openOfficeShop; window.buyOfficeItem=buyOfficeItem; window.startWorkShift=startWorkShift; window.doShiftTask=doShiftTask; window.submitShiftTask=submitShiftTask; window.shiftTaskHint=shiftTaskHint; window.finishShift=finishShift; window.openChatApp=openChatApp; window.renderChats=renderChats; window.sendChatReply=sendChatReply; window.chatHint=chatHint;
 if(S.started){intro.hidden=true;game.hidden=false;sync();makeTask()} else sync();
